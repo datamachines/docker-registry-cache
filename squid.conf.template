@@ -1,18 +1,68 @@
-https_port 443 accel defaultsite={{ docker_host }} no-vhost cert=/etc/ssl/private/cert.pem key=/etc/ssl/private/key.pem
+#this example squid conf assume ssl is done via nginx or haproxy end point. all squid server will be listen on http
+# it worked with at least with 1 sibling cache and 1 parent cache.  
+#use 6G of memory to cache data, and 150G of cache directory.
+
+http_port 443 accel defaultsite={{ docker_host }}  no-vhost 
+#cert=/etc/ssl/private/cert.pem key=/etc/ssl/private/key.pem
+
+#set acl for squid cache servers you set up. replace network with your internal squid servers. ie 10.1.90.2.0/24
+acl squidcluster src {{ squid_network }}
+# replace  proxy src ip with your nginx/haproxy network
+acl proxy src {{ proxy_network }}
+
+#setting icp port to allow peer squid server to talk to each other via icp
+icp_port 3130
+icp_access allow squidcluster
+
+# needed this for peer cache to work
+acl internal_digest urlpath_regex +i ^/squid-internal-periodic/store_digest$
+always_direct allow internal_digest
+never_direct deny internal_digest
+acl peer_icp urlpath_regex +i ^/squid-internal-dynamic/netdb$
+always_direct allow peer_icp 
+never_direct deny peer_icp
+
+#always check with peer/parent, never directly reply
+never_direct allow all
 
 # Uncomment this if you're having caching issues... the logfile is
 # written to /var/log/squid/cache.log
 #debug_options ALL,2
 
+# enables collapse of multiple requests for the same URI to be processed as one request.experimental
+collapsed_forwarding on
+
+#only 1/8 of available RAM leaving space for disk cache
+cache_mem 6 GB
+
 maximum_object_size 8 GB
 range_offset_limit 8 GB
 quick_abort_min -1
-cache_dir ufs /cache/cc {{ cache_size }} 16 256
 
-cache_peer {{ docker_host }} parent 443 0 no-query originserver no-digest name=upstream login=PASSTHRU ssl sslflags=DONT_VERIFY_PEER
+#cache_dir in MB, 150GB, 80% of disk
+#always keep 20 open and unused conntion to peer at all time to reduce tcp handshake delay
+cache_dir aufs /cache/cc 150000 32 512
 
+#peer cache, order matters, try to alternative sibling cache_peer in each node
+cache_peer {{cache_peer_1 }} sibling  443  3130 standby=20    name=peer1 round-robin  login=PASSTHRU allow all 
+cache_peer {{cache_peer_2 } sibling  443  3130 standby=20     name=peer2 round-robin login=PASSTHRU allow all
+cache_peer {{ docker_host }}  parent 443 0 no-query originserver no-digest name=upstream login=PASSTHRU ssl sslflags=DONT_VERIFY_PEER standby=20 allow all
+
+#allow registry host
 acl site dstdomain {{ docker_host }}
-http_access allow site
-cache_peer_access upstream allow site
-cache_peer_access upstream deny all
+
 cache allow site
+cache allow squidcluster
+cache deny all 
+
+sslproxy_cert_error allow all
+sslproxy_flags DONT_VERIFY_PEER
+
+#allow http_access, so auth would pass through
+http_access allow site
+http_access allow squidcluster
+http_access allow proxy
+http_access allow all
+
+
+
