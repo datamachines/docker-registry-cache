@@ -32,7 +32,7 @@ Next, build the image:
 $ ./build.sh
 ```
    
-   or simply docker pull registry.datadrivendiscovery.org/aweng/docker-registry-cache 
+ 
     
 Setup
 =====
