@@ -1,0 +1,10 @@
+alias vis='vi squid.conf'
+alias ta='docker exec -it `docker ps -aqf "name=registry-cache"`  tail -f /var/log/squid/access.log'
+alias tan='docker exec -it `docker ps -aqf "name=registry-cache"`  tail -200 /var/log/squid/access.log'
+alias tc='docker exec -it `docker ps -aqf "name=registry-cache"`  tail -f /var/log/squid/cache.log'
+alias tcn='docker exec -it `docker ps -aqf "name=registry-cache"`  tail -200 /var/log/squid/cache.log'
+alias cm='docker exec -it `docker ps -aqf "name=registry-cache"`'
+alias log='docker logs `docker ps -aqf "name=registry-cache"`'
+alias stp='docker stop `docker ps -aqf "name=registry-cache"`; docker rm `docker ps -aqf "name=registry-cache"`'
+alias deploy='stp;sh build.sh; sh start.sh'
+

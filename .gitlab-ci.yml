@@ -1,0 +1,33 @@
+#this gitlab ci automatically build, tag, and push  local-dind image to gitlab registry 
+build_image:
+  stage: build
+
+  image: docker:stable
+
+  variables:
+    DOCKER_DRIVER: overlay2
+
+
+  before_script:
+    - docker info
+
+  script:
+    - docker login -u gitlab-ci-token -p "$CI_BUILD_TOKEN" $CI_REGISTRY
+    - docker build -t "$CI_REGISTRY_IMAGE:latest" -f Dockerfile .
+    - docker push "$CI_REGISTRY_IMAGE:latest"
+
+  only:
+    # only build master branch
+    - master
+
+  #uncomment to specify which executor to use
+  tags:
+    #uncomment to run with docker runner
+    - docker 
+    #uncomment to  run with shell runner
+    #- shell
+ 
+
+
+
+

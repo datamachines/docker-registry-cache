@@ -1,0 +1,5 @@
+version: '1'
+services:
+   registry-cache:
+     image: 'registry-cache'
+

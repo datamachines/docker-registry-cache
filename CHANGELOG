@@ -1,0 +1,2 @@
+add peer_cache sibling setup, 
+add never_direct allow all and special config for ICP/internal_digest to work on sibling cache hit.  see bug http://squid-web-proxy-cache.1019090.n4.nabble.com/squid-sibling-peers-and-digest-requests-td4681001.html
