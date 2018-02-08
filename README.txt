@@ -25,6 +25,9 @@ First, copy squid.conf.template to squid.conf, and change the variables.
 * `{{ cache_size }}` should be set to the cache size, in MB. According to the 
   squid docs, this should not exceed 80% of the disk. For example, 500000 is
   500GB.
+* `{{ squid_network }}` is your private squid cache server network. ie 192.168.0.1/24
+* `{{ proxy_network }}`  is your external facing network, for example ha-proxy or nginx with ssl 
+* `{{ cache_peer_* }}`  is your peer squid cache server
 
 Next, build the image:
 
